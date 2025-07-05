@@ -84,6 +84,55 @@ import Layout from '../layouts/Layout.astro';
             <div id="card-content" class="text-center">
               <!-- Card content will be inserted here -->
             </div>
+            
+            <!-- Photo Section for special cards -->
+            <div id="photo-section" class="hidden mt-6">
+              <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
+                <h4 class="font-semibold text-yellow-800 mb-2">📸 Foto-Moment!</h4>
+                <p class="text-yellow-700 text-sm mb-4">Macht euch bereit für das Foto! Wenn ihr in Position seid, klickt auf "Foto aufnehmen".</p>
+                
+                <div class="space-y-4">
+                  <div class="flex justify-center space-x-4">
+                    <button id="take-photo-btn" class="bg-pink-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-pink-600 transform hover:scale-105 transition-all duration-200">
+                      📸 Foto aufnehmen
+                    </button>
+                    <button id="skip-photo-btn" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-gray-600 transition-all duration-200">
+                      ⏭️ Überspringen
+                    </button>
+                  </div>
+                  
+                  <!-- Camera preview -->
+                  <div id="camera-preview" class="hidden">
+                    <video id="camera-video" autoplay muted class="w-full max-w-md mx-auto rounded-lg border-2 border-pink-300"></video>
+                    <div class="mt-2 space-x-2">
+                      <button id="capture-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-600 transition-all duration-200">
+                        📷 Aufnehmen
+                      </button>
+                      <button id="cancel-camera-btn" class="bg-red-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-red-600 transition-all duration-200">
+                        ❌ Abbrechen
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Photo display -->
+                  <div id="photo-display" class="hidden">
+                    <img id="captured-photo" class="w-full max-w-md mx-auto rounded-lg border-4 border-pink-300 shadow-lg">
+                    <div class="mt-4 space-x-2">
+                      <button id="save-photo-btn" class="bg-blue-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-600 transition-all duration-200">
+                        💾 Foto speichern
+                      </button>
+                      <button id="retake-photo-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-yellow-600 transition-all duration-200">
+                        🔄 Nochmal
+                      </button>
+                      <button id="photo-done-btn" class="bg-green-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-green-600 transition-all duration-200">
+                        ✅ Fertig
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div class="mt-6 space-x-4">
               <button id="next-player" class="bg-green-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-600 transform hover:scale-105 transition-all duration-200">
                 Nächster Spieler 👉
@@ -179,7 +228,9 @@ import Layout from '../layouts/Layout.astro';
     cards: shuffleCards(),
     cardIndex: 0,
     cardsDrawn: 0,
-    timer: null as NodeJS.Timeout | null
+    timer: null as NodeJS.Timeout | null,
+    currentCard: null as Card | null,
+    cameraStream: null as MediaStream | null
   };
 
   // DOM elements
@@ -212,6 +263,23 @@ import Layout from '../layouts/Layout.astro';
   const showRulesBtn = document.getElementById('show-rules')!;
   const closeRulesBtn = document.getElementById('close-rules')!;
 
+  // Photo elements
+  const photoSection = document.getElementById('photo-section')!;
+  const takePhotoBtn = document.getElementById('take-photo-btn')!;
+  const skipPhotoBtn = document.getElementById('skip-photo-btn')!;
+  const cameraPreview = document.getElementById('camera-preview')!;
+  const cameraVideo = document.getElementById('camera-video') as HTMLVideoElement;
+  const captureBtn = document.getElementById('capture-btn')!;
+  const cancelCameraBtn = document.getElementById('cancel-camera-btn')!;
+  const photoDisplay = document.getElementById('photo-display')!;
+  const capturedPhoto = document.getElementById('captured-photo') as HTMLImageElement;
+  const savePhotoBtn = document.getElementById('save-photo-btn')!;
+  const retakePhotoBtn = document.getElementById('retake-photo-btn')!;
+  const photoDoneBtn = document.getElementById('photo-done-btn')!;
+
+  // Photo cards that should show camera option
+  const photoCards = [38, 44]; // Familienstatue and Familien-Foto-Moment
+
   // Event listeners
   decreasePlayersBtn.addEventListener('click', () => {
     if (gameState.players > 2) {
@@ -240,6 +308,15 @@ import Layout from '../layouts/Layout.astro';
   newGameBtn.addEventListener('click', newGame);
   showRulesBtn.addEventListener('click', () => rulesModal.classList.remove('hidden'));
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.add('hidden'));
+
+  // Photo event listeners
+  takePhotoBtn.addEventListener('click', startCamera);
+  skipPhotoBtn.addEventListener('click', skipPhoto);
+  captureBtn.addEventListener('click', capturePhoto);
+  cancelCameraBtn.addEventListener('click', stopCamera);
+  savePhotoBtn.addEventListener('click', savePhoto);
+  retakePhotoBtn.addEventListener('click', retakePhoto);
+  photoDoneBtn.addEventListener('click', skipPhoto);
 
   // Click outside modal to close
   rulesModal.addEventListener('click', (e) => {
@@ -274,10 +351,18 @@ import Layout from '../layouts/Layout.astro';
     const card = gameState.cards[gameState.cardIndex];
     gameState.cardIndex++;
     gameState.cardsDrawn++;
+    gameState.currentCard = card;
     
     displayCard(card);
     herzglas.classList.add('hidden');
     cardDisplay.classList.remove('hidden');
+    
+    // Check if this is a photo card
+    if (photoCards.includes(card.id)) {
+      photoSection.classList.remove('hidden');
+    } else {
+      photoSection.classList.add('hidden');
+    }
     
     updateDisplay();
   }
@@ -308,7 +393,87 @@ import Layout from '../layouts/Layout.astro';
     gameState.currentPlayer = (gameState.currentPlayer % gameState.players) + 1;
     herzglas.classList.remove('hidden');
     cardDisplay.classList.add('hidden');
+    photoSection.classList.add('hidden');
+    resetPhotoSection();
     updateDisplay();
+  }
+
+  function skipPhoto() {
+    photoSection.classList.add('hidden');
+    resetPhotoSection();
+  }
+
+  function resetPhotoSection() {
+    cameraPreview.classList.add('hidden');
+    photoDisplay.classList.add('hidden');
+    if (gameState.cameraStream) {
+      gameState.cameraStream.getTracks().forEach(track => track.stop());
+      gameState.cameraStream = null;
+    }
+  }
+
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' }, 
+        audio: false 
+      });
+      
+      gameState.cameraStream = stream;
+      cameraVideo.srcObject = stream;
+      cameraPreview.classList.remove('hidden');
+      takePhotoBtn.classList.add('hidden');
+      skipPhotoBtn.classList.add('hidden');
+      
+    } catch (error) {
+      console.error('Kamera-Zugriff fehlgeschlagen:', error);
+      alert('Kamera-Zugriff nicht möglich. Bitte erlauben Sie den Zugriff auf die Kamera oder überspringen Sie das Foto.');
+    }
+  }
+
+  function stopCamera() {
+    if (gameState.cameraStream) {
+      gameState.cameraStream.getTracks().forEach(track => track.stop());
+      gameState.cameraStream = null;
+    }
+    cameraPreview.classList.add('hidden');
+    takePhotoBtn.classList.remove('hidden');
+    skipPhotoBtn.classList.remove('hidden');
+  }
+
+  function capturePhoto() {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    
+    canvas.width = cameraVideo.videoWidth;
+    canvas.height = cameraVideo.videoHeight;
+    
+    context.drawImage(cameraVideo, 0, 0);
+    
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    capturedPhoto.src = imageData;
+    
+    // Stop camera
+    if (gameState.cameraStream) {
+      gameState.cameraStream.getTracks().forEach(track => track.stop());
+      gameState.cameraStream = null;
+    }
+    
+    cameraPreview.classList.add('hidden');
+    photoDisplay.classList.remove('hidden');
+  }
+
+  function savePhoto() {
+    const link = document.createElement('a');
+    link.download = `herzzeit-familienfoto-${new Date().toISOString().split('T')[0]}.jpg`;
+    link.href = capturedPhoto.src;
+    link.click();
+  }
+
+  function retakePhoto() {
+    photoDisplay.classList.add('hidden');
+    takePhotoBtn.classList.remove('hidden');
+    skipPhotoBtn.classList.remove('hidden');
   }
 
   function updateDisplay() {
@@ -348,6 +513,9 @@ import Layout from '../layouts/Layout.astro';
       clearInterval(gameState.timer);
     }
     
+    // Clean up camera if active
+    resetPhotoSection();
+    
     gameScreen.classList.add('hidden');
     endScreen.classList.remove('hidden');
   }
@@ -363,7 +531,9 @@ import Layout from '../layouts/Layout.astro';
       cards: shuffleCards(),
       cardIndex: 0,
       cardsDrawn: 0,
-      timer: null
+      timer: null,
+      currentCard: null,
+      cameraStream: null
     };
     
     playerCountSpan.textContent = '2';
@@ -375,6 +545,8 @@ import Layout from '../layouts/Layout.astro';
     
     herzglas.classList.remove('hidden');
     cardDisplay.classList.add('hidden');
+    photoSection.classList.add('hidden');
+    resetPhotoSection();
   }
 
   // Initialize display
