@@ -1,4 +1,168 @@
-# Astro Starter Kit: Minimal
+# 💝 HerzZeit - Das Familienspiel der Liebe
+
+Ein interaktives Familienspiel, das entwickelt wurde, um Familienmitglieder näher zusammenzubringen, Wertschätzung zu fördern und gemeinsam zu wachsen.
+
+## 🎮 Über das Spiel
+
+**HerzZeit** ist ein digitales Familienspiel mit:
+- 2-10 Spielern (ab 5 Jahren)
+- 20-45 Minuten Spielzeit
+- 50 verschiedene Karten in 3 Kategorien:
+  - 💝 **Herzensfragen** - Tiefere Gespräche und Verbindungen
+  - 🤗 **Liebesaktionen** - Körperliche Nähe und Zuneigung
+  - 🎉 **Lustige Aufgaben** - Spaß und Lachen für die ganze Familie
+
+## 🌟 Spielziel
+
+- Familienmitglieder besser kennenlernen
+- Wertschätzung und Liebe ausdrücken
+- Echte Gespräche fördern
+- Gemeinsam wachsen und Spaß haben
+
+## 🛠️ Technologie
+
+- **Astro.js** - Modernes Web-Framework
+- **Tailwind CSS** - Responsive Design
+- **TypeScript** - Typsichere Entwicklung
+
+## 🚀 Lokale Entwicklung
+
+### Voraussetzungen
+- Node.js (Version 18 oder höher)
+- npm oder yarn
+
+### Installation
+```bash
+# Repository klonen
+git clone https://github.com/izayt/familitime.git
+cd familitime
+
+# Abhängigkeiten installieren
+npm install
+
+# Entwicklungsserver starten
+npm run dev
+```
+
+Das Spiel ist dann unter `http://localhost:4321` verfügbar.
+
+## 📦 Deployment zu GitHub Pages
+
+### Automatisches Deployment
+
+Das Projekt ist für automatisches Deployment zu GitHub Pages konfiguriert:
+
+1. **Repository auf GitHub erstellen**
+2. **Code pushen:**
+   ```bash
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
+   ```
+
+3. **GitHub Pages aktivieren:**
+   - Gehe zu Repository → Settings → Pages
+   - Source: "GitHub Actions" auswählen
+   - Das Deployment startet automatisch bei jedem Push
+
+### Manuelle GitHub Pages Konfiguration
+
+Falls Sie die Konfiguration anpassen möchten:
+
+1. **astro.config.mjs anpassen:**
+   ```js
+   export default defineConfig({
+     site: 'https://DEIN-USERNAME.github.io',
+     base: '/DEIN-REPO-NAME',
+     // ...
+   });
+   ```
+
+2. **Repository Settings:**
+   - Settings → Pages → Source: "GitHub Actions"
+
+### Deployment-Workflow
+
+Das `.github/workflows/deploy.yml` Script:
+- Triggert bei Push auf `main` oder `master` Branch
+- Installiert Abhängigkeiten
+- Baut die Astro-Site
+- Deployed automatisch zu GitHub Pages
+
+## 🎯 Verfügbare Scripts
+
+```bash
+# Entwicklungsserver
+npm run dev
+
+# Produktions-Build
+npm run build
+
+# Build vorschau
+npm run preview
+
+# Astro CLI
+npm run astro
+```
+
+## 🎨 Anpassungen
+
+### Eigene Karten hinzufügen
+
+Bearbeiten Sie `src/data/cards.ts`:
+
+```typescript
+export const cards: Card[] = [
+  {
+    id: 51,
+    type: 'herzensfrage',
+    text: 'Ihre neue Frage hier',
+    icon: '💝'
+  },
+  // ... weitere Karten
+];
+```
+
+### Design anpassen
+
+- Farben: Tailwind-Klassen in `src/pages/index.astro`
+- Layout: `src/layouts/Layout.astro`
+- Styles: `src/styles/global.css`
+
+## 🎪 Spielregeln
+
+1. **Vorbereitung:** Spieleranzahl und Dauer wählen
+2. **Spielablauf:** Reihum Karten aus dem "Herzglas" ziehen
+3. **Aufgaben:** Fragen beantworten oder Aktionen ausführen
+4. **Respekt:** Einander zuhören und wertschätzen
+5. **Abschluss:** Liebessterne vergeben
+
+## 🌈 Wirkung
+
+- Fördert echte Familiengespräche
+- Stärkt emotionale Verbindungen
+- Bringt Spaß und Tiefe in den Alltag
+- Lässt jedes Familienmitglied sich gesehen fühlen
+
+## 🤝 Beitragen
+
+Gerne können Sie das Spiel erweitern:
+- Neue Karten vorschlagen
+- Bugs melden
+- Features anfragen
+- Pull Requests erstellen
+
+## 📄 Lizenz
+
+Dieses Projekt steht unter der MIT-Lizenz. Siehe `LICENSE` für Details.
+
+## ❤️ Danksagung
+
+Erstellt mit Liebe für Familien überall. Das Spiel basiert auf den Prinzipien der gewaltfreien Kommunikation und positiven Psychologie.
+
+---
+
+**Viel Spaß beim Spielen und Verbinden! 💝**
 
 ```sh
 npm create astro@latest -- --template minimal
